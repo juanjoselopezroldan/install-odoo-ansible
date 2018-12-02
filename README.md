@@ -4,5 +4,8 @@ This repository is for perform the installation of odoo with your database postg
 
 ## Structure
 This repository is structured of the next shape:
-* One file that have the nodes that install the components need for that odoo is run perfectly.
-* One file that will indicate the files that have to execute in order for that the installation is satisfactory.
+* One file that will indicate whitch is the file to start (file ansible.cfg).
+* One file that have the nodes that install the components need for that odoo is run perfectly (file hosts.yaml).
+* One file that will indicate the files that have to execute in order for that the installation is satisfactory (file playbook.yaml).
+
+![alt text][image/ansible_scenario.png]

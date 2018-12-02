@@ -8,4 +8,4 @@ This repository is structured of the next shape:
 * One file that have the nodes that install the components need for that odoo is run perfectly (file hosts.yaml).
 * One file that will indicate the files that have to execute in order for that the installation is satisfactory (file playbook.yaml).
 
-[image/ansible_scenario.png]
+[https://github.com/juanjoselopezroldan/install-odoo-ansible/blob/master/image/ansible_scenario.png]

@@ -1,5 +1,5 @@
 # install-odoo-ansible (Is yet in construction, when is terminated, this message will is change)
-This repository is for perform the installation of odoo with your database postgreSQL in two nodes (one node for odoo and one node for postgreSQL) with ANSIBLE for that this installation is perform automatically.
+This repository is for perform the installation of odoo with your database postgreSQL in two nodes (one node for odoo and one node for postgreSQL) with ANSIBLE for that this installation is perform automatically (The nodes must have installated Debian 9).
 
 
 ## Structure

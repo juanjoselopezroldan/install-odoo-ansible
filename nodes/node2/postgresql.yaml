@@ -1,0 +1,6 @@
+---
+  - hosts: node2
+    become: yes
+    tasks:
+      - ping:
+          data: crash

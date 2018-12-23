@@ -1,0 +1,2 @@
+- include: nodes/node1/odoo.yaml
+- include: nodes/node2/postgresql.yaml

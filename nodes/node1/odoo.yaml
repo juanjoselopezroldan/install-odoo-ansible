@@ -1,0 +1,28 @@
+---
+  - hosts: node1
+    become: yes
+    tasks:
+      - name: Update repositories and packages of Debian
+        apt:
+          update_cache: yes
+          upgrade: yes
+
+      - name: Install packages need for odoo
+        apt: 
+          name: "{{packages}}"
+        vars:
+          packages:
+          - git
+          - libxslt1-dev
+          - libevent-dev
+          - libsasl2-dev
+          - libldap2-dev
+          - libpq-dev
+          - libpng-dev
+          - libjpeg-dev
+          - gcc
+          - python3
+          - python3-pip
+          - python-pip
+          - libxrender1
+          - node-less

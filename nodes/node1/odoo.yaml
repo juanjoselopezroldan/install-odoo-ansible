@@ -12,17 +12,58 @@
           name: "{{packages}}"
         vars:
           packages:
+          - sudo
+          - build-essential
+          - libssl-dev
+          - libffi-dev
+          - unicode
+          - gcc
+          - g++
+          - pkg-config
+          - gnupg
           - git
+          - python-pip
+          - python3
+          - python3-pip
+          - python3-setuptools
+          - python3-dev
+          - python3-openssl
+          - libxml2
           - libxslt1-dev
+          - libxslt1.1
+          - libzip-dev
           - libevent-dev
           - libsasl2-dev
           - libldap2-dev
           - libpq-dev
           - libpng-dev
           - libjpeg-dev
-          - gcc
-          - python3
-          - python3-pip
-          - python-pip
           - libxrender1
           - node-less
+
+      - name: Change language of system for the installation of odoo
+      - replace:
+        path: /etc/locale.gen
+        regexp: '^#\ es_ES'
+        replace: 'es_ES'
+        backup: yes
+
+      - name: Insert data of language for system Debian
+        debconf:
+          name: locales
+          question: locales/locales_to_be_generated
+          value: es_ES ISO-8859-1, es_ES.UTF-8 UTF-8, es_ES@euro ISO-8859-15
+          vtype: multiselect
+
+        debconf:
+          name: locales
+          question: locales/default_environment_locale
+          value: es_ES
+          vtype: select
+
+        - shell: "export DEBIAN_FRONTEND= noninteractive dpkg-reconfigure locales"
+
+
+
+
+

@@ -41,12 +41,11 @@
           - libxrender1
           - node-less
 
-      - name: Change language of system for the installation of odoo
       - replace:
-        path: /etc/locale.gen
-        regexp: '^#\ es_ES'
-        replace: 'es_ES'
-        backup: yes
+          path: /etc/locale.gen
+          regexp: '^#\ es_ES'
+          replace: 'es_ES'
+          backup: yes
 
       - name: Insert data of language for system Debian
         debconf:
@@ -61,9 +60,158 @@
           value: es_ES
           vtype: select
 
-        - shell: "export DEBIAN_FRONTEND= noninteractive dpkg-reconfigure locales"
+      - name: Rebuild locales
+        command: "{{ item }}"
+        with_items:
+          - dpkg-reconfigure locales -f noninteractive
 
+      - shell: "echo 'LANG=es_ES.UTF-8' > /etc/default/locale"
+      - shell: "echo 'LANGUAGE=es_ES.ISO-8859-15@euro' >> /etc/default/locale"
+      - shell: "echo 'LC_ALL=es_ES.UTF-8' >> /etc/default/locale"
+      - shell: "echo 'LC_CTYPE=es_ES.UTF-8' >> /etc/default/locale"
+      - shell: "echo 'LC_MESSAGES=es_ES.UTF-8' >> /etc/default/locale"
+      - shell: "echo 'LC_TIME=es_ES.UTF-8' >> /etc/default/locale"
+      - shell: "echo 'LC_PAPER=es_ES.UTF-8' >> /etc/default/locale"
+      - shell: "echo 'LC_MEASUREMENT=es_ES.UTF-8' >> /etc/default/locale"
+      - shell: "echo 'LC_MONETARY=es_ES.UTF-8' >> /etc/default/locale"
+      - shell: "echo 'LC_NUMERIC=es_ES.UTF-8' >> /etc/default/locale"
+      - shell: "locale-gen es_ES.UTF-8"
+      - shell: "localedef -i es_ES -f UTF-8 es_ES.UTF-8"
 
+      - name: Download key for install client-postgresql
+        apt_key:
+          url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          state: present
 
+      - apt_repository:
+          repo: deb http://apt.postgresql.org/pub/repos/apt/ stretch-pgdg main
+          state: present
+          update_cache: yes
 
+      - name: Install package of client-postgresql
+        apt:
+          name: postgresql-client-10
+          update_cache: yes
 
+      - name: Add apt key for nodesource
+        apt_key:
+          url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+          state: present
+
+      - name: Add repo for nodesource
+        apt_repository:
+          repo: deb https://deb.nodesource.com/node_0.10 {{ ansible_distribution_release }} main
+          update_cache: yes
+
+      - name: Install NodeJS and npm
+        apt:
+          name: "{{packages}}"
+          update_cache: yes
+        vars:
+          packages:
+            - nodejs
+            - npm
+
+      - name: Download wkhtmltox
+        get_url:
+          url: https://builds.wkhtmltopdf.org/0.12.1.3/wkhtmltox_0.12.1.3-1~stretch_amd64.deb
+          dest: /tmp/wkhtmltox.deb
+          force_basic_auth: yes
+
+      - stat:
+          path: /tmp/wkhtmltox.deb
+          checksum_algorithm: sha1
+        register: result
+      - fail:
+          msg: "Download of file is not valid"
+        when: result != '58e0ce87da529365c32b741b37385d6104e83167'
+
+      - name: Install wkhtmltox.deb package
+        apt:
+          deb: /tmp/wkhtmltox.deb
+
+      - shell: "apt-get -y install -f --no-install-recommends"
+
+      - pip:
+          name: 
+            - psycogreen
+            - lxml
+            - phonenumbers
+            - xmlsig
+            - paramiko
+            - zeep
+            - numpy
+            - configparser
+            - passlib
+          executable: pip3
+
+      - shell: "wkhtmltopdf -V"
+
+      - git:
+          repo: https://github.com/odoo/odoo.git
+          dest: /tmp/ooo11
+          version: odoo11
+          depth: 1
+
+      - pip:
+          requirements: /tmp/ooo11/odoo/requirements.txt
+          executable: pip3
+
+      - shell: "python3 /tmp/ooo11/odoo/setup.py install"
+
+      - name: Copying file bin in the system
+        copy:
+          src: /tmp/ooo11/odoo/odoo-bin
+          dest: /usr/bin/
+
+      - name: Create group odoo
+        group:
+          name: odoo
+          state: present
+
+      - name: Create user odoo and this user is added in the group odoo
+        user:
+          name: odoo
+          shell: /bin/bash
+          group: odoo
+
+      - file:
+          path: /usr/local/lib/python3.7/dist-packages/odoo/addons
+          state: directory
+          mode: 0755
+
+      - name: Copying file addons in the system
+        copy:
+          src: /tmp/ooo11/odoo/addons/*
+          dest: /usr/local/lib/python3.7/dist-packages/odoo/addons
+
+      - file:
+          path: /etc/odoo
+          state: directory
+          mode: 0755
+
+      - name: Copying file conf in the directory of odoo
+        copy:
+          src: /tmp/ooo11/odoo/debian/odoo.conf
+          dest: /etc/odoo/odoo.conf
+
+      - shell: "echo 'odoo   ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers"
+      - shell: "mkdir -p /mnt/custom/extra-addons/guadaltech/jasper_reports/custom_reports"
+
+      - file:
+          path: /mnt
+          owner: odoo
+          group: root
+          recurse: yes
+
+      - file:
+          path: /etc/odoo/odoo.conf
+          owner: root
+          group: odoo
+          mode: 770
+
+      - file:
+          path: /home/odoo
+          state: directory
+          owner: odoo
+          group: odoo

@@ -12,6 +12,7 @@
           name: "{{packages}}"
         vars:
           packages:
+          - apt-transport-https
           - sudo
           - build-essential
           - libssl-dev
@@ -54,6 +55,7 @@
           value: es_ES ISO-8859-1, es_ES.UTF-8 UTF-8, es_ES@euro ISO-8859-15
           vtype: multiselect
 
+      - name: Insert data of language default for system Debian
         debconf:
           name: locales
           question: locales/default_environment_locale
@@ -100,7 +102,8 @@
 
       - name: Add repo for nodesource
         apt_repository:
-          repo: deb https://deb.nodesource.com/node_0.10 {{ ansible_distribution_release }} main
+          repo: deb https://deb.nodesource.com/node_10.x stretch main
+          state: present
           update_cache: yes
 
       - name: Install NodeJS and npm
@@ -124,7 +127,7 @@
         register: result
       - fail:
           msg: "Download of file is not valid"
-        when: result != '58e0ce87da529365c32b741b37385d6104e83167'
+        when: result.stat == '58e0ce87da529365c32b741b37385d6104e83167'
 
       - name: Install wkhtmltox.deb package
         apt:
@@ -149,19 +152,19 @@
 
       - git:
           repo: https://github.com/odoo/odoo.git
-          dest: /tmp/ooo11
+          dest: /tmp/odoo11
           version: odoo11
           depth: 1
 
       - pip:
-          requirements: /tmp/ooo11/odoo/requirements.txt
+          requirements: /tmp/odoo11/odoo/requirements.txt
           executable: pip3
 
-      - shell: "python3 /tmp/ooo11/odoo/setup.py install"
+      - shell: "python3 /tmp/odoo11/odoo/setup.py install"
 
       - name: Copying file bin in the system
         copy:
-          src: /tmp/ooo11/odoo/odoo-bin
+          src: /tmp/odoo11/odoo/odoo-bin
           dest: /usr/bin/
 
       - name: Create group odoo
@@ -182,7 +185,7 @@
 
       - name: Copying file addons in the system
         copy:
-          src: /tmp/ooo11/odoo/addons/*
+          src: /tmp/odoo11/odoo/addons/*
           dest: /usr/local/lib/python3.7/dist-packages/odoo/addons
 
       - file:
@@ -192,7 +195,7 @@
 
       - name: Copying file conf in the directory of odoo
         copy:
-          src: /tmp/ooo11/odoo/debian/odoo.conf
+          src: /tmp/odoo11/odoo/debian/odoo.conf
           dest: /etc/odoo/odoo.conf
 
       - shell: "echo 'odoo   ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers"

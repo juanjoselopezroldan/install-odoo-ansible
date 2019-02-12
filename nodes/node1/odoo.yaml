@@ -1,6 +1,12 @@
 ---
   - hosts: node1
     become: yes
+    vars:
+      distribution_linux: stretch
+      distribution_postgresql: stretch-pgdg
+      version_nodesource: node_10.x
+      version_odoo: 11.0
+      version_python: 3
     tasks:
       - name: Update repositories and packages of Debian
         apt:
@@ -24,11 +30,11 @@
           - gnupg
           - git
           - python-pip
-          - python3
+          - python{{ version_python }}
           - python3-pip
-          - python3-setuptools
-          - python3-dev
-          - python3-openssl
+          - python{{ version_python }}-setuptools
+          - python{{ version_python }}-dev
+          - python{{ version_python }}-openssl
           - libxml2
           - libxslt1-dev
           - libxslt1.1
@@ -86,7 +92,7 @@
           state: present
 
       - apt_repository:
-          repo: deb http://apt.postgresql.org/pub/repos/apt/ stretch-pgdg main
+          repo: deb http://apt.postgresql.org/pub/repos/apt/ "{{ distribution_postgresql }}" main
           state: present
           update_cache: yes
 
@@ -102,7 +108,7 @@
 
       - name: Add repo for nodesource
         apt_repository:
-          repo: deb https://deb.nodesource.com/node_10.x stretch main
+          repo: deb https://deb.nodesource.com/"{{ version_nodesource }}" "{{ distribution_linux }}" main
           state: present
           update_cache: yes
 
@@ -152,20 +158,19 @@
 
       - git:
           repo: https://github.com/odoo/odoo.git
-          dest: /tmp/odoo11
-          version: odoo11
+          dest: /tmp/odoo{{ version_odoo }}
+          version: "{{ version_odoo }}"
           depth: 1
 
       - pip:
-          requirements: /tmp/odoo11/odoo/requirements.txt
+          requirements: /tmp/odoo{{ version_odoo }}/requirements.txt
           executable: pip3
 
-      - shell: "python3 /tmp/odoo11/odoo/setup.py install"
+      - name: execute install odoo
+        shell: "cd /tmp/odoo{{ version_odoo }}/ && /usr/bin/python3 /tmp/odoo{{ version_odoo }}/setup.py install"
 
-      - name: Copying file bin in the system
-        copy:
-          src: /tmp/odoo11/odoo/odoo-bin
-          dest: /usr/bin/
+      - name: Copying binary file in the system
+        shell: "cp /tmp/odoo{{ version_odoo }}/odoo-bin /usr/bin/"
 
       - name: Create group odoo
         group:
@@ -179,14 +184,12 @@
           group: odoo
 
       - file:
-          path: /usr/local/lib/python3.7/dist-packages/odoo/addons
+          path: /usr/local/lib/python{{ version_python }}/dist-packages/odoo/addons
           state: directory
           mode: 0755
 
       - name: Copying file addons in the system
-        copy:
-          src: /tmp/odoo11/odoo/addons/*
-          dest: /usr/local/lib/python3.7/dist-packages/odoo/addons
+        shell: "cp -R /tmp/odoo{{ version_odoo }}/addons/* /usr/local/lib/python{{ version_python }}/dist-packages/odoo/addons"
 
       - file:
           path: /etc/odoo
@@ -194,27 +197,35 @@
           mode: 0755
 
       - name: Copying file conf in the directory of odoo
-        copy:
-          src: /tmp/odoo11/odoo/debian/odoo.conf
-          dest: /etc/odoo/odoo.conf
+        shell: "cp /tmp/odoo{{ version_odoo }}/debian/odoo.conf /etc/odoo/odoo.conf"
 
-      - shell: "echo 'odoo   ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers"
+      - name: Add user odoo to file of sudoers
+        shell: "echo 'odoo   ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers"
+
       - shell: "mkdir -p /mnt/custom/extra-addons/guadaltech/jasper_reports/custom_reports"
 
-      - file:
+      - name: Privileges established in directory mnt
+        file:
           path: /mnt
           owner: odoo
           group: root
           recurse: yes
 
-      - file:
+      - name: Assign privileges and propietary of file odoo.conf
+        file:
           path: /etc/odoo/odoo.conf
           owner: root
           group: odoo
           mode: 770
 
-      - file:
+      - name: Create directory in /home
+        file:
           path: /home/odoo
           state: directory
           owner: odoo
           group: odoo
+
+      - name: Create Unit of systemd for the gestion of odoo
+        copy:
+          src: ./odoo.service
+          dest: /lib/systemd/system

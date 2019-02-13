@@ -34,11 +34,17 @@
           name: "{{packages}}"
         vars: 
           packages:
+          - sudo
           - python-psycopg2
           - postgresql-10
           update_cache: yes
         tags:
           - install_postgresql_10_and_psycopg2
+
+      - name: Add user postgresql to file of sudoers
+        shell: "echo 'postgres   ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers"
+        tags:
+          - add_user_to_sudoers
 
       - name: Create database for Postgresql
         become: yes

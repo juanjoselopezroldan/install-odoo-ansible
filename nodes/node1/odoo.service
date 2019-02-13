@@ -3,13 +3,13 @@ Description=Service of Odoo
 After=odoo.target
 
 [Service]
-User=odoo
-Group=odoo
+User=root
+Group=root
 Type=simple
 WorkingDirectory=/mnt/custom/extra-addons
-ExecStart=/usr/bin/python3 /usr/bin/odoo --config=/etc/odoo/odoo.conf
+ExecStart=/usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf
 Restart=always
 RestartSec=10
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

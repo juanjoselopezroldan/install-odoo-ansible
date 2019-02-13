@@ -13,6 +13,8 @@
       user_database: db_user = odoo
       passwd_database: db_password = odoo
       filter_database: dbfilter = test
+      user: odoo
+      group: odoo
     tasks:
       - name: Update repositories and packages of Debian
         apt:
@@ -227,16 +229,16 @@
 
       - name: Create group odoo
         group:
-          name: odoo
+          name: "{{ group }}"
           state: present
         tags:
           - create_goup_odoo
 
       - name: Create user odoo and this user is added in the group odoo
         user:
-          name: odoo
+          name: "{{ user }}"
           shell: /bin/bash
-          group: odoo
+          group: "{{ group }}"
         tags:
           - create_user_odoo
 
@@ -255,6 +257,8 @@
       - file:
           path: /etc/odoo
           state: directory
+          owner: "{{ user }}"
+          group: root
           mode: 0755
         tags:
           - define_privileges_in_directory_odoo
@@ -272,7 +276,7 @@
       - name: Privileges established in directory mnt
         file:
           path: /mnt
-          owner: odoo
+          owner: "{{ user }}"
           group: root
           recurse: yes
         tags:
@@ -282,8 +286,8 @@
         file:
           path: /home/odoo
           state: directory
-          owner: odoo
-          group: odoo
+          owner: "{{ user }}"
+          group: "{{ group }}"
         tags:
           - create_directory_in_home
 
@@ -291,18 +295,18 @@
         copy:
           src: ./odoo.conf
           dest: /etc/odoo/
-          owner: odoo
-          group: odoo
-          mode: 770
+          owner: "{{ user }}"
+          group: "{{ group }}"
+          mode: 0770
         tags:
           - add_file_odoo_in_the_path_etc
 
       - name: Assign privileges and propietary of file odoo.conf
         file:
           path: /etc/odoo/odoo.conf
-          owner: root
-          group: odoo
-          mode: 770
+          owner: "{{ user }}"
+          group: "{{ group }}"
+          mode: 0770
         tags:
           - assign_privileges_and_propietary_in_file_odoo.conf
 

@@ -6,8 +6,8 @@ After=odoo.target
 User=odoo
 Group=odoo
 Type=simple
-WorkingDirectory=/opt/odoo
-ExecStart=/usr/bin/python3 /opt/odoo/ocb/odoo.py -c /opt/odoo/.openerp_serverrc 
+WorkingDirectory=/mnt/custom/extra-addons
+ExecStart=/usr/bin/python3 /usr/bin/odoo --config=/etc/odoo/odoo.conf
 Restart=always
 RestartSec=10
 

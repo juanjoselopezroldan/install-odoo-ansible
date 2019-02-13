@@ -7,11 +7,19 @@
       version_nodesource: node_10.x
       version_odoo: 11.0
       version_python: 3
+      admin_pass: admin_passwd = ted97
+      host_database: db_host = 10.40.10.56
+      port_database: db_port = 5432
+      user_database: db_user = odoo
+      passwd_database: db_password = odoo
+      filter_database: dbfilter = test
     tasks:
       - name: Update repositories and packages of Debian
         apt:
           update_cache: yes
           upgrade: yes
+        tags:
+          - update
 
       - name: Install packages need for odoo
         apt: 
@@ -47,12 +55,16 @@
           - libjpeg-dev
           - libxrender1
           - node-less
+        tags:
+          - install_packages_system
 
       - replace:
           path: /etc/locale.gen
           regexp: '^#\ es_ES'
           replace: 'es_ES'
           backup: yes
+        tags:
+          - replace_locale
 
       - name: Insert data of language for system Debian
         debconf:
@@ -60,6 +72,8 @@
           question: locales/locales_to_be_generated
           value: es_ES ISO-8859-1, es_ES.UTF-8 UTF-8, es_ES@euro ISO-8859-15
           vtype: multiselect
+        tags:
+          - define_language_system
 
       - name: Insert data of language default for system Debian
         debconf:
@@ -67,50 +81,69 @@
           question: locales/default_environment_locale
           value: es_ES
           vtype: select
+        tags:
+          - define_language_system_default
 
       - name: Rebuild locales
         command: "{{ item }}"
         with_items:
           - dpkg-reconfigure locales -f noninteractive
+        tags:
+          - rebuild_locales
 
-      - shell: "echo 'LANG=es_ES.UTF-8' > /etc/default/locale"
-      - shell: "echo 'LANGUAGE=es_ES.ISO-8859-15@euro' >> /etc/default/locale"
-      - shell: "echo 'LC_ALL=es_ES.UTF-8' >> /etc/default/locale"
-      - shell: "echo 'LC_CTYPE=es_ES.UTF-8' >> /etc/default/locale"
-      - shell: "echo 'LC_MESSAGES=es_ES.UTF-8' >> /etc/default/locale"
-      - shell: "echo 'LC_TIME=es_ES.UTF-8' >> /etc/default/locale"
-      - shell: "echo 'LC_PAPER=es_ES.UTF-8' >> /etc/default/locale"
-      - shell: "echo 'LC_MEASUREMENT=es_ES.UTF-8' >> /etc/default/locale"
-      - shell: "echo 'LC_MONETARY=es_ES.UTF-8' >> /etc/default/locale"
-      - shell: "echo 'LC_NUMERIC=es_ES.UTF-8' >> /etc/default/locale"
-      - shell: "locale-gen es_ES.UTF-8"
-      - shell: "localedef -i es_ES -f UTF-8 es_ES.UTF-8"
+      - name: Define spain in the file locale
+        command: "{{ item }}"
+        with_items:
+          - echo 'LANG=es_ES.UTF-8' > /etc/default/locale
+          - echo 'LANGUAGE=es_ES.ISO-8859-15@euro' >> /etc/default/locale
+          - echo 'LC_ALL=es_ES.UTF-8' >> /etc/default/locale
+          - echo 'LC_CTYPE=es_ES.UTF-8' >> /etc/default/locale
+          - echo 'LC_MESSAGES=es_ES.UTF-8' >> /etc/default/locale
+          - echo 'LC_TIME=es_ES.UTF-8' >> /etc/default/locale
+          - echo 'LC_PAPER=es_ES.UTF-8' >> /etc/default/locale
+          - echo 'LC_MEASUREMENT=es_ES.UTF-8' >> /etc/default/locale
+          - echo 'LC_MONETARY=es_ES.UTF-8' >> /etc/default/locale
+          - echo 'LC_NUMERIC=es_ES.UTF-8' >> /etc/default/locale
+          - locale-gen es_ES.UTF-8
+          - localedef -i es_ES -f UTF-8 es_ES.UTF-8
+        tags:
+          - define_es_in_file_locales
 
       - name: Download key for install client-postgresql
         apt_key:
           url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
           state: present
+        tags:
+          - download_keY_postgres_client
 
       - apt_repository:
           repo: deb http://apt.postgresql.org/pub/repos/apt/ "{{ distribution_postgresql }}" main
           state: present
           update_cache: yes
+        tags:
+          - add_repository_postgres_client
 
       - name: Install package of client-postgresql
         apt:
           name: postgresql-client-10
           update_cache: yes
+        tags:
+          - install_packages_postgres_client
 
       - name: Add apt key for nodesource
         apt_key:
           url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
           state: present
+        tags:
+          - add_key_nodesource
 
       - name: Add repo for nodesource
         apt_repository:
           repo: deb https://deb.nodesource.com/"{{ version_nodesource }}" "{{ distribution_linux }}" main
           state: present
           update_cache: yes
+        tags:
+          - add_repo_nodesource
 
       - name: Install NodeJS and npm
         apt:
@@ -120,12 +153,16 @@
           packages:
             - nodejs
             - npm
+        tags:
+          - install_nodejs_and_npm
 
       - name: Download wkhtmltox
         get_url:
           url: https://builds.wkhtmltopdf.org/0.12.1.3/wkhtmltox_0.12.1.3-1~stretch_amd64.deb
           dest: /tmp/wkhtmltox.deb
           force_basic_auth: yes
+        tags:
+          - download_wkhtmltox
 
       - stat:
           path: /tmp/wkhtmltox.deb
@@ -134,12 +171,18 @@
       - fail:
           msg: "Download of file is not valid"
         when: result.stat == '58e0ce87da529365c32b741b37385d6104e83167'
+        tags:
+          - ckeck_file_deb
 
       - name: Install wkhtmltox.deb package
         apt:
           deb: /tmp/wkhtmltox.deb
+        tags:
+          - install_file_deb
 
       - shell: "apt-get -y install -f --no-install-recommends"
+        tags:
+          - install_all_packages_but_only_need
 
       - pip:
           name: 
@@ -153,6 +196,8 @@
             - configparser
             - passlib
           executable: pip3
+        tags:
+          - install_packages_with_pip3
 
       - shell: "wkhtmltopdf -V"
 
@@ -161,48 +206,68 @@
           dest: /tmp/odoo{{ version_odoo }}
           version: "{{ version_odoo }}"
           depth: 1
+        tags:
+          - git_clone_repository_odoo
 
       - pip:
           requirements: /tmp/odoo{{ version_odoo }}/requirements.txt
           executable: pip3
+        tags:
+          - install_requirements_with_pip3
 
       - name: execute install odoo
         shell: "cd /tmp/odoo{{ version_odoo }}/ && /usr/bin/python3 /tmp/odoo{{ version_odoo }}/setup.py install"
+        tags:
+          - execute_install_odoo
 
       - name: Copying binary file in the system
-        shell: "cp /tmp/odoo{{ version_odoo }}/odoo-bin /usr/bin/"
+        shell: "cp /tmp/odoo{{ version_odoo }}/odoo-bin /usr/bin/odoo"
+        tags:
+          - copy_binary_in_system
 
       - name: Create group odoo
         group:
           name: odoo
           state: present
+        tags:
+          - create_goup_odoo
 
       - name: Create user odoo and this user is added in the group odoo
         user:
           name: odoo
           shell: /bin/bash
           group: odoo
+        tags:
+          - create_user_odoo
 
       - file:
           path: /usr/local/lib/python{{ version_python }}/dist-packages/odoo/addons
           state: directory
           mode: 0755
+        tags:
+          - create_directory_for_addons
 
       - name: Copying file addons in the system
         shell: "cp -R /tmp/odoo{{ version_odoo }}/addons/* /usr/local/lib/python{{ version_python }}/dist-packages/odoo/addons"
+        tags:
+          - define_language_system_default
 
       - file:
           path: /etc/odoo
           state: directory
           mode: 0755
+        tags:
+          - define_privileges_in_directory_odoo
 
       - name: Copying file conf in the directory of odoo
-        shell: "cp /tmp/odoo{{ version_odoo }}/debian/odoo.conf /etc/odoo/odoo.conf"
+        shell: "cp /tmp/odoo{{ version_odoo }}/debian/odoo.conf /etc/odoo/odoo_default.conf"
+        tags:
+          - copy_file_conf_of_odoo_in_etc
 
       - name: Add user odoo to file of sudoers
         shell: "echo 'odoo   ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers"
-
-      - shell: "mkdir -p /mnt/custom/extra-addons/guadaltech/jasper_reports/custom_reports"
+        tags:
+          - add_user_to_sudoers
 
       - name: Privileges established in directory mnt
         file:
@@ -210,13 +275,8 @@
           owner: odoo
           group: root
           recurse: yes
-
-      - name: Assign privileges and propietary of file odoo.conf
-        file:
-          path: /etc/odoo/odoo.conf
-          owner: root
-          group: odoo
-          mode: 770
+        tags:
+          - privileges_established_in_mnt
 
       - name: Create directory in /home
         file:
@@ -224,8 +284,65 @@
           state: directory
           owner: odoo
           group: odoo
+        tags:
+          - create_directory_in_home
+
+      - name: Add file of odoo.conf in the path /etc/odoo
+        copy:
+          src: ./odoo.conf
+          dest: /etc/odoo/
+          owner: odoo
+          group: odoo
+          mode: 770
+        tags:
+          - add_file_odoo_in_the_path_etc
+
+      - name: Assign privileges and propietary of file odoo.conf
+        file:
+          path: /etc/odoo/odoo.conf
+          owner: root
+          group: odoo
+          mode: 770
+        tags:
+          - assign_privileges_and_propietary_in_file_odoo.conf
+
+      - name: Changes in the file odoo.conf for to apply the environment
+        lineinfile:
+          path: /etc/odoo/odoo.conf
+          regexp: '{{ item.regexp }}'
+          line: '{{ item.line }}'
+          backup: yes
+        with_items:
+          - { regexp: '^admin_passwd', line: '{{ admin_pass }}' }
+          - { regexp: '^db_host', line: '{{ host_database }}' }
+          - { regexp: '^db_port', line: '{{ port_database }}' }
+          - { regexp: '^db_user', line: '{{ user_database }}' }
+          - { regexp: '^db_password', line: '{{ passwd_database }}' }
+          - { regexp: '^dbfilter', line: '{{ filter_database }}' }
+        tags:
+          - define_environment_in_file_odoo.conf
 
       - name: Create Unit of systemd for the gestion of odoo
         copy:
           src: ./odoo.service
-          dest: /lib/systemd/system
+          dest: /lib/systemd/system/
+        tags:
+          - add_file_of_systemd_in_the_system
+
+      - name: Reload of units of systemd
+        systemd:
+          daemon_reload: yes
+        tags:
+          - reload_configuration_systemd
+
+      - name: Enable service in the start of node
+        systemd:
+          name: odoo.service
+          enabled: yes
+        tags:
+          - enable_service_in_start_of_node
+
+      - name: Reboot node for to add all the changes
+        reboot:
+        tags:
+          - reboot_system

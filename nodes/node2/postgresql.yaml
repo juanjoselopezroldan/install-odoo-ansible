@@ -1,6 +1,67 @@
 ---
   - hosts: node2
     become: yes
+    vars:
+      version_postgres: 10
+      user: odoo
+      passwd: odoo
+      db: test
+      port: 5432
+      debian_version: stretch
     tasks:
-      - ping:
-          data: crash
+      - name: Update repositories and packages of Debian
+        apt:
+          update_cache: yes
+          upgrade: yes
+        tags:
+          - update
+
+      - name: Add key for to install postgresql
+        apt_key:
+          url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          state: present
+
+      - name: Add repository of postgresql
+        apt_repository:
+          repo: deb http://apt.postgresql.org/pub/repos/apt/ {{ debian_version }}-pgdg main
+          state: present
+          update_cache: yes
+        tags:
+          - add_repository_postgres
+
+      - name: Install postgres 10 and psycopg2
+        apt:
+          name: "{{packages}}"
+        vars: 
+          packages:
+          - python-psycopg2
+          - postgresql-10
+          update_cache: yes
+        tags:
+          - install_postgresql_10_and_psycopg2
+
+      - name: Create database for Postgresql
+        become: yes
+        become_user: postgres
+        postgresql_db:
+          name: "{{ db }}"
+          encoding: UTF-8
+          lc_collate: es_ES.UTF-8
+          lc_ctype: es_ES.UTF-8
+          template: template0
+
+      - name: Create of user fot Postgresql
+        become: yes
+        become_user: postgres
+        postgresql_user:
+          name: "{{ user }}"
+          password: "{{ passwd }}"
+
+      - name: Assing privileges user for database
+        become: yes
+        become_user: postgres
+        postgresql_privs:
+          db: "{{ db }}"
+          role: "{{ user }}"
+          objs: ALL_IN_SCHEMA
+          privs: SELECT,INSERT,UPDATE,DELETE

@@ -1,13 +1,8 @@
 ---
   - hosts: node2
     become: yes
-    vars:
-      version_postgres: 10
-      user: odoo
-      passwd: odoo
-      db: test
-      port: 5432
-      debian_version: stretch
+    vars_files:
+      - ../../vars/vars_node2.yaml
     tasks:
       - name: Update repositories and packages of Debian
         apt:
@@ -46,22 +41,24 @@
         tags:
           - add_user_to_sudoers
 
-      - name: Create database for Postgresql
-        become: yes
-        become_user: postgres
-        postgresql_db:
-          name: "{{ db }}"
-          encoding: UTF-8
-          lc_collate: es_ES.UTF-8
-          lc_ctype: es_ES.UTF-8
-          template: template0
-
       - name: Create of user fot Postgresql
         become: yes
         become_user: postgres
         postgresql_user:
           name: "{{ user }}"
           password: "{{ passwd }}"
+          role_attr_flags: CREATEDB
+
+      - name: Create database for Postgresql
+        become: yes
+        become_user: postgres
+        postgresql_db:
+          name: "{{ db }}"
+          owner: "{{ user }}" 
+          encoding: UTF-8
+          lc_collate: es_ES.UTF-8
+          lc_ctype: es_ES.UTF-8
+          template: template0
 
       - name: Assing privileges user for database
         become: yes
@@ -70,4 +67,29 @@
           db: "{{ db }}"
           role: "{{ user }}"
           objs: ALL_IN_SCHEMA
-          privs: SELECT,INSERT,UPDATE,DELETE
+          privs: ALL
+
+      - name: Enable access remote
+        replace:
+          path: "{{ file_postgresql_conf }}"
+          regexp: "^#listen_addresses = 'localhost'"
+          replace: "listen_addresses = '*'"
+          backup: yes
+        tags:
+          - enable_access_remote
+
+      - name: Enable accept requests of all nodes
+        replace:
+          path: "{{ file_pg_hba }}"
+          regexp: '^host    all             all             127.0.0.1/32            md5'
+          replace: 'host    all             all             all            md5'
+          backup: yes
+        tags:
+          - enable_accept_requests_of_all_nodes
+
+      - name: Restart service of postgres for to apply changes
+        systemd:
+          name: postgresql
+          state: restarted
+        tags:
+          - restart_service_postgresql

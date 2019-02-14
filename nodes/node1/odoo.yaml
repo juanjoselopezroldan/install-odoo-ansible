@@ -1,20 +1,8 @@
 ---
   - hosts: node1
     become: yes
-    vars:
-      distribution_linux: stretch
-      distribution_postgresql: stretch-pgdg
-      version_nodesource: node_10.x
-      version_odoo: 11.0
-      version_python: 3
-      admin_pass: admin_passwd = ted97
-      host_database: db_host = 10.40.10.56
-      port_database: db_port = 5432
-      user_database: db_user = odoo
-      passwd_database: db_password = odoo
-      filter_database: dbfilter = test
-      user: odoo
-      group: odoo
+    vars_files:
+      - ../../vars/vars_node1.yaml
     tasks:
       - name: Update repositories and packages of Debian
         apt:
@@ -290,6 +278,26 @@
           group: "{{ group }}"
         tags:
           - create_directory_in_home
+
+      - name: Create directory data_dir
+        file:
+          path: /var/lib/odoo
+          state: directory
+          owner: "{{ user }}"
+          group: "{{ group }}"
+          mode: 0770
+        tags:
+          - create_directory_for_data_dir
+
+      - name: Create directory for logs
+        file:
+          path: /var/log/odoo
+          state: directory
+          owner: "{{ user }}"
+          group: "{{ group }}"
+          mode: 0770
+        tags:
+          - create_directory_for_logs
 
       - name: Add file of odoo.conf in the path /etc/odoo
         copy:

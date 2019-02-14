@@ -1,13 +1,13 @@
 [Unit]
 Description=Service of Odoo
-After=odoo.target
+After=network.target
 
 [Service]
-User=root
+User=odoo
 Group=root
 Type=simple
-WorkingDirectory=/mnt/custom/extra-addons
-ExecStart=/usr/bin/python3 /usr/bin/odoo -c /etc/odoo/odoo.conf
+WorkingDirectory=/var/lib/odoo
+ExecStart=/usr/bin/odoo --config=/etc/odoo/odoo.conf
 Restart=always
 RestartSec=10
 

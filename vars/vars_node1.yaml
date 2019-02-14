@@ -1,0 +1,15 @@
+---
+
+distribution_linux: stretch
+distribution_postgresql: stretch-pgdg
+version_nodesource: node_10.x
+version_odoo: 11.0
+version_python: 3
+admin_pass: admin_passwd = ted97
+host_database: db_host = 10.40.10.69
+port_database: db_port = 5432
+user_database: db_user = odoo
+passwd_database: db_password = odoo
+filter_database: dbfilter = odoo*
+user: odoo
+group: odoo

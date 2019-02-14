@@ -1,0 +1,9 @@
+---
+version_postgres: 10
+user: odoo
+passwd: odoo
+db: odoo
+port: 5432
+debian_version: stretch
+file_postgresql_conf: /etc/postgresql/10/main/postgresql.conf
+file_pg_hba: /etc/postgresql/10/main/pg_hba.conf

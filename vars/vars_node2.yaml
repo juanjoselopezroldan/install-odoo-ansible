@@ -1,8 +1,8 @@
 ---
 version_postgres: 10
-user: odoo
-passwd: odoo
-db: odoo
+user: USER_DATABASE
+passwd: PASSWORD_DATABASE
+db: NAME_DATABASE
 port: 5432
 debian_version: stretch
 file_postgresql_conf: /etc/postgresql/10/main/postgresql.conf

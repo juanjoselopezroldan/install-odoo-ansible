@@ -18,7 +18,7 @@
 
       - name: Add repository of postgresql
         apt_repository:
-          repo: deb http://apt.postgresql.org/pub/repos/apt/ {{ debian_version }}-pgdg main
+          repo: deb http://apt.postgresql.org/pub/repos/apt/ {{ version_linux }}-pgdg main
           state: present
           update_cache: yes
         tags:

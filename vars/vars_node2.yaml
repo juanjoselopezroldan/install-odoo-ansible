@@ -4,6 +4,6 @@ user: USER_DATABASE
 passwd: PASSWORD_DATABASE
 db: NAME_DATABASE
 port: 5432
-debian_version: stretch
+version_linux: stretch
 file_postgresql_conf: /etc/postgresql/10/main/postgresql.conf
 file_pg_hba: /etc/postgresql/10/main/pg_hba.conf

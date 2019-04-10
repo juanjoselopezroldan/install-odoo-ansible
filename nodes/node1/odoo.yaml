@@ -44,6 +44,7 @@
           - libpng-dev
           - libjpeg-dev
           - libxrender1
+          - libpq5
           - node-less
         tags:
           - install_packages_system
@@ -129,7 +130,7 @@
 
       - name: Add repo for nodesource
         apt_repository:
-          repo: deb https://deb.nodesource.com/"{{ version_nodesource }}" "{{ distribution_linux }}" main
+          repo: deb https://deb.nodesource.com/"{{ version_nodesource }}" "{{ version_linux }}" main
           state: present
           update_cache: yes
         tags:
@@ -148,7 +149,7 @@
 
       - name: Download wkhtmltox
         get_url:
-          url: https://builds.wkhtmltopdf.org/0.12.1.3/wkhtmltox_0.12.1.3-1~stretch_amd64.deb
+          url: https://builds.wkhtmltopdf.org/0.12.1.3/wkhtmltox_0.12.1.3-1~"{{ version_linux }}"_amd64.deb
           dest: /tmp/wkhtmltox.deb
           force_basic_auth: yes
         tags:

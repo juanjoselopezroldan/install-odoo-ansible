@@ -1,6 +1,6 @@
 ---
 
-distribution_linux: stretch
+version_linux: stretch
 distribution_postgresql: stretch-pgdg
 version_nodesource: node_10.x
 version_odoo: 11.0
